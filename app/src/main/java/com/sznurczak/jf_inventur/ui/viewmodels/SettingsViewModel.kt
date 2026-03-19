@@ -1,4 +1,4 @@
-package com.sznurczak.jf_inventur.data
+package com.sznurczak.jf_inventur.ui.viewmodels
 
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -6,13 +6,12 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.sznurczak.jf_inventur.SettingsViewModelFactory
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import androidx.datastore.preferences.core.Preferences
+import com.sznurczak.jf_inventur.data.SettingsPreferences
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 

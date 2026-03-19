@@ -3,13 +3,15 @@ package com.sznurczak.jf_inventur.data
 import android.app.Activity
 import android.nfc.NfcAdapter
 import android.util.Log
+import com.sznurczak.jf_inventur.data.tag.ScanResult
+import com.sznurczak.jf_inventur.data.tag.TagManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 class ScannerManager(private val nfcAdapter: NfcAdapter?) {
 
-    private val _scannedData = MutableStateFlow<TagData?>(null)
-    val scannedData: StateFlow<TagData?> = _scannedData
+    private val _scannedData = MutableStateFlow<ScanResult?>(null)
+    val scannedData: StateFlow<ScanResult?> = _scannedData
 
     private val tagManager = TagManager()
 

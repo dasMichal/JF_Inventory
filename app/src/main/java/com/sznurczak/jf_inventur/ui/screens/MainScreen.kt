@@ -1,8 +1,9 @@
-package com.sznurczak.jf_inventur.ui
+package com.sznurczak.jf_inventur.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,11 +15,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,16 +31,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.sznurczak.jf_inventur.R
-import com.sznurczak.jf_inventur.data.SettingsViewModel
-import com.sznurczak.jf_inventur.data.TagData
+import com.sznurczak.jf_inventur.data.tag.ScanResult
+import com.sznurczak.jf_inventur.ui.viewmodels.SettingsViewModel
+import com.sznurczak.jf_inventur.data.tag.TagData
 
 
 @Composable
-fun MainScreen(
-    modifier: Modifier = Modifier,
-    viewModel: SettingsViewModel,
-    scannedData: TagData?
-) {
+fun MainScreen(modifier: Modifier = Modifier,viewModel: SettingsViewModel,scannedData: ScanResult?)
+{
+
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -70,7 +75,7 @@ fun MainScreen(
 
 
                     when (scannedData) {
-                        is TagData.KeyValueData -> {
+                        is ScanResult.KeyValueData -> {
                             scannedData.data.forEach { (key, value) ->
                                 Row(modifier = Modifier.fillMaxWidth()) {
                                     Text(text = "$key: ", style = MaterialTheme.typography.bodyMedium)
@@ -78,10 +83,10 @@ fun MainScreen(
                                 }
                             }
                         }
-                        is TagData.SimpleId -> {
+                        is ScanResult.SimpleId -> {
                             Text(text = "ID: ${scannedData.id}")
                         }
-                        is TagData.Error -> {
+                        is ScanResult.Error -> {
                             Text(text = "Error: ${scannedData.message}")
                         }
                         null -> {
@@ -98,6 +103,28 @@ fun MainScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {}
+    }
+}
+
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SmallTopAppBar(
+    content: @Composable (PaddingValues) -> Unit
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.primary,
+                ),
+                title = { Text("Small Top App Bar") }
+            )
+        },
+    ) { innerPadding ->
+        content(innerPadding)
     }
 }
 
@@ -154,7 +181,7 @@ fun ScanCard(
 
 @Composable
 fun ScanResultCard(
-    scannedData: TagData?,
+    scannedData: ScanResult?,
     onClear: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -190,12 +217,12 @@ fun ScanResultCard(
             // Variable Grid
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ResultRow(label = "ID", value = when(scannedData) {
-                    is TagData.SimpleId -> scannedData.id
-                    is TagData.KeyValueData -> scannedData.data["id"] ?: "Unbekannt"
+                    is ScanResult.SimpleId -> scannedData.id
+                    is ScanResult.KeyValueData -> scannedData.data["id"] ?: "Unbekannt"
                     else -> "N/A"
                 })
 
-                // These would eventually come from your DB lookup
+                // These would eventually come from DB
                 ResultRow(label = "Besitzer", value = "Max Mustermann")
                 ResultRow(label = "Größe", value = "42")
                 ResultRow(label = "Seite", value = "Links")
@@ -210,6 +237,7 @@ fun ScanResultCard(
             ) {
                 Text("Nächster Scan")
             }
+
         }
     }
 }

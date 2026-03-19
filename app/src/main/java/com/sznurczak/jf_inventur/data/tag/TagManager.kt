@@ -1,18 +1,19 @@
-package com.sznurczak.jf_inventur.data
+package com.sznurczak.jf_inventur.data.tag
 
 import android.nfc.NdefRecord
 import android.nfc.Tag
 import android.nfc.tech.Ndef
 import android.util.Log
 
-sealed class TagData {
-    data class KeyValueData(val data: Map<String, String>) : TagData()
-    data class SimpleId(val id: String) : TagData()
-    data class Error(val message: String) : TagData()
+sealed class ScanResult {
+    data class KeyValueData(val data: Map<String, String>) : ScanResult()
+    data class SimpleId(val id: String) : ScanResult()
+    data class Error(val message: String) : ScanResult()
 }
 
 class TagManager {
-    fun parseTag(tag: Tag): TagData {
+    fun parseTag(tag: Tag): ScanResult
+    {
         val ndef = Ndef.get(tag)
         if (ndef != null) {
             try {
@@ -28,14 +29,14 @@ class TagManager {
                     }
                     val keyValueData = parseKeyValueString(payloadString)
                     if (keyValueData.isNotEmpty()) {
-                        return TagData.KeyValueData(keyValueData)
+                        return ScanResult.KeyValueData(keyValueData)
                     } else {
-                        return TagData.SimpleId(payloadString)
+                        return ScanResult.SimpleId(payloadString)
                     }
                 }
             } catch (e: Exception) {
                 Log.e("TagManager", "Error parsing tag", e)
-                return TagData.Error("Error: ${e.message}")
+                return ScanResult.Error("Error: ${e.message}")
             } finally {
                 try {
                     ndef.close()
@@ -44,7 +45,7 @@ class TagManager {
                 }
             }
         }
-        return TagData.SimpleId(tag.id.toHexString())
+        return ScanResult.SimpleId(tag.id.toHexString())
     }
 
     private fun parseKeyValueString(data: String): Map<String, String> {
@@ -69,15 +70,7 @@ class TagManager {
 
     private fun ByteArray.toHexString() = joinToString("") { "%02x".format(it) }
 
-
-    fun writeTag(tag: Tag, data: String)
-    {
-        val ndef = Ndef.get(tag)
-
-
+    fun writeTag(tag: Tag, data: String) {
+        // Implementation for writing tags
     }
-
-
-
-
 }

@@ -1,54 +1,28 @@
 package com.sznurczak.jf_inventur
 
-import android.R.attr.port
-import android.content.pm.PackageManager
-import android.net.http.SslCertificate.restoreState
-import android.net.http.SslCertificate.saveState
 import android.nfc.NfcAdapter
 import android.os.Bundle
-import android.util.Log
-import android.view.HapticFeedbackConstants
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedAssistChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -59,11 +33,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.sznurczak.jf_inventur.data.repository.DatabaseRepository
+import com.sznurczak.jf_inventur.ui.viewmodels.InventoryViewModel
 import com.sznurczak.jf_inventur.data.ScannerManager
-import com.sznurczak.jf_inventur.data.SettingsViewModel
-import com.sznurczak.jf_inventur.data.TagData
-import com.sznurczak.jf_inventur.ui.MainScreen
-import com.sznurczak.jf_inventur.ui.SettingsScreen
+import com.sznurczak.jf_inventur.ui.viewmodels.SettingsViewModel
+import com.sznurczak.jf_inventur.ui.viewmodels.UserViewModel
+import com.sznurczak.jf_inventur.ui.screens.MainScreen
+import com.sznurczak.jf_inventur.ui.screens.SettingsScreen
+import com.sznurczak.jf_inventur.ui.screens.UserListScreen
 import com.sznurczak.jf_inventur.ui.theme.JF_InventurTheme
 
 class MainActivity : ComponentActivity()
@@ -83,11 +60,22 @@ class MainActivity : ComponentActivity()
             JF_InventurTheme {
                 val navController = rememberNavController()
 
+                val app = (LocalContext.current.applicationContext as InventoryApplication)
+
+                val inventoryViewModel: InventoryViewModel = viewModel(
+                    factory = AppViewModelFactory(app.repository)
+                )
+                val userViewModel: UserViewModel = viewModel(
+                    factory = AppViewModelFactory(app.repository)
+                )
+
                 val settingsViewModel: SettingsViewModel = viewModel(
                     factory = SettingsViewModelFactory(this)
                 )
 
                 val scannedData by scannerManager.scannedData.collectAsState()
+
+
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -103,6 +91,9 @@ class MainActivity : ComponentActivity()
 
                         composable("main") {
                             MainScreen(viewModel = settingsViewModel, scannedData = scannedData)
+                        }
+                        composable("userList") {
+                            UserListScreen(InventoryViewModel = inventoryViewModel, UserViewModel = userViewModel)
                         }
                         composable("settings") {
                            SettingsScreen(viewModel = settingsViewModel)
@@ -133,6 +124,7 @@ fun BottomNavigationBar(navController: NavHostController)
 
     val navigationItems = listOf(
         NavigationItem(route = "main", label = "Main", icon = Icons.Default.Home),
+        NavigationItem(route = "userList", label = "User List", icon = Icons.Default.Person),
         NavigationItem(route = "settings", label = "Settings", icon = Icons.Default.Settings),
     )
 
@@ -159,6 +151,9 @@ fun BottomNavigationBar(navController: NavHostController)
         }
     }
 }
+
+
+
 
 data class NavigationItem(
     val route: String,
@@ -191,5 +186,16 @@ class SettingsViewModelFactory(val activity: com.sznurczak.jf_inventur.MainActiv
     override fun <T : ViewModel> create(modelClass: Class<T>): T
     {
         return SettingsViewModel(activity) as T
+    }
+}
+
+// A generic factory to handle your new ViewModels
+class AppViewModelFactory(private val repository: DatabaseRepository) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        return when {
+            modelClass.isAssignableFrom(InventoryViewModel::class.java) -> InventoryViewModel(repository) as T
+            modelClass.isAssignableFrom(UserViewModel::class.java) -> UserViewModel(repository) as T
+            else -> throw IllegalArgumentException("Unknown ViewModel class")
+        }
     }
 }
