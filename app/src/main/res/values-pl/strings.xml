@@ -2,4 +2,5 @@
 <resources>
     <string name="app_name">"JF Inventur "</string>
     <string name="create_new_user">Dodaj nową osobe</string>
+    <string name="user_management_title">Administracja członków</string>
 </resources>
