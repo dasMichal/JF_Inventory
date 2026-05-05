@@ -9,6 +9,7 @@ import androidx.room.Transaction
 import com.sznurczak.jf_inventur.data.database.MemberKind
 import com.sznurczak.jf_inventur.data.database.MemberWithShoes
 import com.sznurczak.jf_inventur.data.database.Shoes
+import com.sznurczak.jf_inventur.data.database.ShoeWithMember
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -26,6 +27,10 @@ interface InventurDao {
     @Query("SELECT * FROM shoes WHERE memberId = :memberId")
     fun getShoesForMember(memberId: Int): Flow<List<Shoes>>
 
+    @Transaction
+    @Query("SELECT * FROM shoes WHERE id = :shoeId")
+    suspend fun getShoeWithMember(shoeId: String): ShoeWithMember?
+
     // Members
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMember(member: MemberKind): Long
@@ -42,8 +47,4 @@ interface InventurDao {
     @Transaction
     @Query("SELECT * FROM members")
     fun getMembersWithShoes(): Flow<List<MemberWithShoes>>
-
-    //TODO: Add Join Query
 }
-
-

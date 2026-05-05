@@ -18,16 +18,27 @@ class ScannerManager(private val nfcAdapter: NfcAdapter?) {
     private val readerCallback = NfcAdapter.ReaderCallback { tag ->
         val parsedData = tagManager.parseTag(tag)
         _scannedData.value = parsedData
+        Log.d("ScannerManager", "Scanned data: $parsedData")
+
     }
 
     fun startScanning(activity: Activity) {
+        if (nfcAdapter == null) return
         try {
-            nfcAdapter?.enableReaderMode(
+            // Broaden flags and REMOVE 'NO_PLATFORM_SOUNDS' to get the system beep
+            val flags = NfcAdapter.FLAG_READER_NFC_A or 
+                        NfcAdapter.FLAG_READER_NFC_B or 
+                        NfcAdapter.FLAG_READER_NFC_F or 
+                        NfcAdapter.FLAG_READER_NFC_V or 
+                        NfcAdapter.FLAG_READER_NFC_BARCODE
+
+            nfcAdapter.enableReaderMode(
                 activity,
                 readerCallback,
-                NfcAdapter.FLAG_READER_NFC_A or NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS,
+                flags,
                 null
             )
+            Log.d("ScannerManager", "Reader mode enabled with sound")
         } catch (e: Exception) {
             Log.e("ScannerManager", "Error enabling reader mode", e)
         }
@@ -39,6 +50,10 @@ class ScannerManager(private val nfcAdapter: NfcAdapter?) {
         } catch (e: Exception) {
             Log.e("ScannerManager", "Error disabling reader mode", e)
         }
+    }
+
+    fun clearScan() {
+        _scannedData.value = null
     }
 
     private fun ByteArray.toHexString() = joinToString("") { "%02x".format(it) }

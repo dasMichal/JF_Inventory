@@ -1,9 +1,11 @@
 package com.sznurczak.jf_inventur.data.database
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import androidx.room.Relation
 
 @Entity(
     tableName = "shoes",
@@ -12,20 +14,29 @@ import androidx.room.PrimaryKey
             entity = MemberKind::class,
             parentColumns = ["uid"],
             childColumns = ["memberId"],
-            onDelete = ForeignKey.SET_NULL // Or CASCADE if shoes should be deleted with member
+            onDelete = ForeignKey.SET_NULL
         )
     ],
     indices = [Index(value = ["memberId"])]
 )
 data class Shoes(
-    @PrimaryKey val id: String,  // Unique NFC/QR per shoe
-    val pairId: String,          // Same for left+right
-    val side: ShoeSide,          // LEFT or RIGHT
+    @PrimaryKey val id: String,
+    val pairId: String,
+    val side: ShoeSide,
     val size: Int,
     val brand: String,
     val category: String,
     val dateOfPurchase: String,
-    val memberId: Int? = null    // Foreign key to MemberKind
+    val memberId: Int? = null
 )
 
 enum class ShoeSide { LEFT, RIGHT }
+
+data class ShoeWithMember(
+    @Embedded val shoe: Shoes,
+    @Relation(
+        parentColumn = "memberId",
+        entityColumn = "uid"
+    )
+    val member: MemberKind?
+)

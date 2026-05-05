@@ -1,27 +1,34 @@
 package com.sznurczak.jf_inventur
 
+import android.content.Context
 import android.nfc.NfcAdapter
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -42,12 +49,15 @@ import com.sznurczak.jf_inventur.ui.screens.MainScreen
 import com.sznurczak.jf_inventur.ui.screens.SettingsScreen
 import com.sznurczak.jf_inventur.ui.screens.UserListScreen
 import com.sznurczak.jf_inventur.ui.theme.JF_InventurTheme
+import com.sznurczak.jf_inventur.ui.viewmodels.ScanViewModel
+import kotlin.jvm.java
 
 class MainActivity : ComponentActivity()
 {
     private var nfcAdapter: NfcAdapter? = null
     private lateinit var scannerManager: ScannerManager
 
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?)
     {
         super.onCreate(savedInstanceState)
@@ -73,12 +83,36 @@ class MainActivity : ComponentActivity()
                     factory = SettingsViewModelFactory(this)
                 )
 
+                val scanViewModel: ScanViewModel = viewModel(
+                    factory = AppViewModelFactory(app.repository)
+                )
+
                 val scannedData by scannerManager.scannedData.collectAsState()
+
+                // Bridge the scanner to the ViewModel
+                androidx.compose.runtime.LaunchedEffect(scannedData) {
+                    scannedData?.let { scanViewModel.onScan(it) }
+                }
 
 
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
+                    topBar = {
+                        TopAppBar(
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                titleContentColor = MaterialTheme.colorScheme.primary,
+                            ),
+                            title = {
+                                Text(
+                                    text = stringResource(R.string.app_name),
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        )
+                    },
                     bottomBar = {
                         BottomNavigationBar(navController)
                     }
@@ -90,7 +124,16 @@ class MainActivity : ComponentActivity()
                     ) {
 
                         composable("main") {
-                            MainScreen(viewModel = settingsViewModel, scannedData = scannedData)
+                            MainScreen(
+                                settingviewModel = settingsViewModel,
+                                scanViewModel = scanViewModel,
+                                inventoryViewModel = inventoryViewModel,
+                                userViewModel = userViewModel,
+                                onClear = {
+                                    scanViewModel.clearScan()
+                                    scannerManager.clearScan()
+                                }
+                            )
                         }
                         composable("userList") {
                             UserListScreen(InventoryViewModel = inventoryViewModel, UserViewModel = userViewModel)
@@ -116,6 +159,9 @@ class MainActivity : ComponentActivity()
 }
 
 
+
+
+
 @Composable
 fun BottomNavigationBar(navController: NavHostController)
 {
@@ -124,7 +170,7 @@ fun BottomNavigationBar(navController: NavHostController)
 
     val navigationItems = listOf(
         NavigationItem(route = "main", label = "Main", icon = Icons.Default.Home),
-        NavigationItem(route = "userList", label = "User List", icon = Icons.Default.Person),
+        NavigationItem(route = "userList", label = stringResource(R.string.user_management_title), icon = Icons.Default.Person),
         NavigationItem(route = "settings", label = "Settings", icon = Icons.Default.Settings),
     )
 
@@ -180,21 +226,27 @@ fun GreetingPreview()
 }
 
 
-
-class SettingsViewModelFactory(val activity: com.sznurczak.jf_inventur.MainActivity) : ViewModelProvider.Factory
+@Suppress("UNCHECKED_CAST")
+class SettingsViewModelFactory(private val context: Context) : ViewModelProvider.Factory
 {
     override fun <T : ViewModel> create(modelClass: Class<T>): T
     {
-        return SettingsViewModel(activity) as T
+        return if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
+            SettingsViewModel(context) as T
+        } else {
+            throw IllegalArgumentException("Unknown ViewModel class")
+        }
     }
 }
 
+@Suppress("UNCHECKED_CAST")
 // A generic factory to handle your new ViewModels
 class AppViewModelFactory(private val repository: DatabaseRepository) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return when {
             modelClass.isAssignableFrom(InventoryViewModel::class.java) -> InventoryViewModel(repository) as T
             modelClass.isAssignableFrom(UserViewModel::class.java) -> UserViewModel(repository) as T
+            modelClass.isAssignableFrom(ScanViewModel::class.java) -> ScanViewModel(repository) as T
             else -> throw IllegalArgumentException("Unknown ViewModel class")
         }
     }

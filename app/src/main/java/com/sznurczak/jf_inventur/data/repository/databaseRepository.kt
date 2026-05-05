@@ -4,6 +4,7 @@ import com.sznurczak.jf_inventur.data.dao.InventurDao
 import com.sznurczak.jf_inventur.data.database.MemberKind
 import com.sznurczak.jf_inventur.data.database.MemberWithShoes
 import com.sznurczak.jf_inventur.data.database.Shoes
+import com.sznurczak.jf_inventur.data.database.ShoeWithMember
 import kotlinx.coroutines.flow.Flow
 
 class DatabaseRepository(private val inventurDao: InventurDao) {
@@ -21,6 +22,10 @@ class DatabaseRepository(private val inventurDao: InventurDao) {
 
     fun getShoesForMember(memberId: Int): Flow<List<Shoes>> {
         return inventurDao.getShoesForMember(memberId)
+    }
+
+    suspend fun getShoeWithMember(shoeId: String): ShoeWithMember? {
+        return inventurDao.getShoeWithMember(shoeId)
     }
 
     // Members
