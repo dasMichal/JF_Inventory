@@ -1,5 +1,8 @@
 <resources>
-    <string name="app_name">JF Inventur </string>
-    <string name="create_new_user">"Neues Mitglied anlegen"</string>
-    <string name="user_management_title">User Management</string>
+    <string name="app_name">JF Inventur</string>
+    <string name="create_new_user">Neues Mitglied anlegen</string>
+    <string name="scan_title">Scan</string>
+    <string name="member_management_title">Mitgliederverwaltung</string>
+    <string name="member_profile_title">Mitgliederprofil</string>
+    <string name="settings_title">Einstellungen</string>
 </resources>

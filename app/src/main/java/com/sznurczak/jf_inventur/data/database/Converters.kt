@@ -1,6 +1,7 @@
 package com.sznurczak.jf_inventur.data.database
 
 import androidx.room.TypeConverter
+import com.sznurczak.jf_inventur.data.enums.Jugendflamme
 import com.sznurczak.jf_inventur.data.enums.gender
 
 class Converters {
@@ -15,4 +16,10 @@ class Converters {
 
     @TypeConverter
     fun toGender(value: String?) = value?.let { gender.valueOf(it) }
+
+    @TypeConverter
+    fun fromJugendflamme(value: Jugendflamme?) = value?.name
+
+    @TypeConverter
+    fun toJugendflamme(value: String?) = value?.let { Jugendflamme.valueOf(it) }
 }

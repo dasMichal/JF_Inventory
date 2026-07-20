@@ -6,7 +6,10 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import com.sznurczak.jf_inventur.data.database.Badge
+import com.sznurczak.jf_inventur.data.database.MemberBadge
 import com.sznurczak.jf_inventur.data.database.MemberKind
+import com.sznurczak.jf_inventur.data.database.MemberWithBadges
 import com.sznurczak.jf_inventur.data.database.MemberWithShoes
 import com.sznurczak.jf_inventur.data.database.Shoes
 import com.sznurczak.jf_inventur.data.database.ShoeWithMember
@@ -47,4 +50,27 @@ interface InventurDao {
     @Transaction
     @Query("SELECT * FROM members")
     fun getMembersWithShoes(): Flow<List<MemberWithShoes>>
+
+    @Transaction
+    @Query("SELECT * FROM members WHERE uid = :memberId")
+    fun getMemberWithBadges(memberId: Int): Flow<MemberWithBadges?>
+
+    // Badges
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertBadge(badge: Badge): Long
+
+    @Query("SELECT * FROM badges")
+    fun getAllBadges(): Flow<List<Badge>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMemberBadge(memberBadge: MemberBadge)
+
+    @Delete
+    suspend fun deleteMemberBadge(memberBadge: MemberBadge)
+
+    @Query("DELETE FROM member_badges WHERE memberId = :memberId")
+    suspend fun deleteAllBadgesForMember(memberId: Int)
+
+    @Query("SELECT * FROM badges WHERE name = :name LIMIT 1")
+    suspend fun getBadgeByName(name: String): Badge?
 }

@@ -6,7 +6,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -46,10 +45,13 @@ import com.sznurczak.jf_inventur.data.ScannerManager
 import com.sznurczak.jf_inventur.ui.viewmodels.SettingsViewModel
 import com.sznurczak.jf_inventur.ui.viewmodels.UserViewModel
 import com.sznurczak.jf_inventur.ui.screens.MainScreen
+import com.sznurczak.jf_inventur.ui.screens.MemberDetailScreen
 import com.sznurczak.jf_inventur.ui.screens.SettingsScreen
 import com.sznurczak.jf_inventur.ui.screens.UserListScreen
 import com.sznurczak.jf_inventur.ui.theme.JF_InventurTheme
 import com.sznurczak.jf_inventur.ui.viewmodels.ScanViewModel
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import kotlin.jvm.java
 
 class MainActivity : ComponentActivity()
@@ -99,6 +101,16 @@ class MainActivity : ComponentActivity()
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
+                        val navBackStackEntry by navController.currentBackStackEntryAsState()
+                        val currentDestination = navBackStackEntry?.destination
+                        val title = when {
+                            currentDestination?.hierarchy?.any { it.route == "main" } == true -> stringResource(R.string.scan_title)
+                            currentDestination?.hierarchy?.any { it.route == "userList" } == true -> stringResource(R.string.member_management_title)
+                            currentDestination?.hierarchy?.any { it.route?.startsWith("memberDetail") == true } == true -> stringResource(R.string.member_profile_title)
+                            currentDestination?.hierarchy?.any { it.route == "settings" } == true -> stringResource(R.string.settings_title)
+                            else -> stringResource(R.string.app_name)
+                        }
+
                         TopAppBar(
                             colors = TopAppBarDefaults.topAppBarColors(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -106,7 +118,7 @@ class MainActivity : ComponentActivity()
                             ),
                             title = {
                                 Text(
-                                    text = stringResource(R.string.app_name),
+                                    text = title,
                                     style = MaterialTheme.typography.headlineMedium,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
@@ -136,7 +148,23 @@ class MainActivity : ComponentActivity()
                             )
                         }
                         composable("userList") {
-                            UserListScreen(InventoryViewModel = inventoryViewModel, UserViewModel = userViewModel)
+                            UserListScreen(
+                                userViewModel = userViewModel,
+                                onMemberClick = { memberId ->
+                                    navController.navigate("memberDetail/$memberId")
+                                }
+                            )
+                        }
+                        composable(
+                            route = "memberDetail/{memberId}",
+                            arguments = listOf(navArgument("memberId") { type = NavType.IntType })
+                        ) { backStackEntry ->
+                            val memberId = backStackEntry.arguments?.getInt("memberId") ?: return@composable
+                            MemberDetailScreen(
+                                memberId = memberId,
+                                userViewModel = userViewModel,
+                                onBack = { navController.popBackStack() }
+                            )
                         }
                         composable("settings") {
                            SettingsScreen(viewModel = settingsViewModel)
@@ -169,9 +197,9 @@ fun BottomNavigationBar(navController: NavHostController)
     val currentDestination = navBackStackEntry?.destination
 
     val navigationItems = listOf(
-        NavigationItem(route = "main", label = "Main", icon = Icons.Default.Home),
-        NavigationItem(route = "userList", label = stringResource(R.string.user_management_title), icon = Icons.Default.Person),
-        NavigationItem(route = "settings", label = "Settings", icon = Icons.Default.Settings),
+        NavigationItem(route = "main", label = stringResource(R.string.scan_title), icon = Icons.Default.Home),
+        NavigationItem(route = "userList", label = stringResource(R.string.member_management_title), icon = Icons.Default.Person),
+        NavigationItem(route = "settings", label = stringResource(R.string.settings_title), icon = Icons.Default.Settings),
     )
 
     NavigationBar {
